@@ -1,0 +1,179 @@
+
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>在线随机数生成器</title>
+		<meta name="keywords" content="随机数生成器,随机摇号器,在线随机数生成器">
+		<meta name="description" content="本网站提供在线随机数生成器，在线抽签摇号，在线抽奖，大转盘抽奖，双色球模拟摇号，并且可以方便用户自定义参数等功能" />
+        <meta name="baidu-site-verification" content="sA9lncqwpX" />
+        <meta name="shenma-site-verification" content="9b2a8806d0e679b68f0a30f5bcb67f08_1578560402">
+        <meta name="viewport" content="width=device-width,initial-scale=1.0, maximum-scale=1.0,user-scalable=no">
+		<link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/4.3.1/css/bootstrap.min.css">
+		<link rel="stylesheet" href="base.css">
+
+        <script>
+			var _hmt = _hmt || [];
+			(function() {
+				var hm = document.createElement("script");
+				hm.src = "https://hm.baidu.com/hm.js?7460c520f93b150eaea8298a605ed6f9";
+				var s = document.getElementsByTagName("script")[0];
+				s.parentNode.insertBefore(hm, s);
+			})();
+        </script>
+	</head>
+
+	<body>
+		<div class="container jumbotron text-center top">
+            <div class="row">
+                <div class="col-sm-12" style="text-align: left; margin-bottom: 20px;">
+                    <a href="在线数生成器.html" title="在线随机数生成器">随机数</a>
+                    <a href="cj.html" title="在线抽奖" style="margin-left: 10px;">在线抽奖</a>
+                    <a href="zp.html" title="免费转盘抽奖" style="margin-left: 10px;">转盘抽奖</a>
+                </div>
+            </div>
+			<h1 align="center" style="margin-bottom: 5%;">随机数生成器</h1>
+			<div class="row">
+				<div class="col-md-2 col-3" style="">
+					<span for="shumu" class="input-label"  style="margin-bottom: 0;text-align: center;float: right;padding-top:5px;">数目&nbsp;:</span>
+				</div>
+				<div class="col-md-3 col-9">
+					<input type="number" class="form-control"  onkeyup="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')" id="shumu" value="10">
+				</div>
+			</div>
+			<div class="row" style="margin-top: 10px;">
+				<div class="col-md-2 col-3 " style="float: right;">
+					<span for="min" class="input-label" style="margin-bottom: 0;text-align: center;float: right;padding-top:5px;">最小值&nbsp;:</span>
+				</div>
+				<div class="col-md-3 col-9">
+					<input type="number"  onkeyup="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')" class="form-control" name="min" id="min" value="0">
+				</div>
+				<div class="col-md-2 col-3 input_top" style="float: right;">
+					<span for="max" class="input-label"  style="margin-bottom: 0;text-align: center;float: right;padding-top:5px;">最大值&nbsp;:</span>
+				</div>
+				<div class="col-md-3 col-9 input_top">
+					<input type="number"  onkeyup="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')" class="form-control" name="max" id="max" value="48">
+				</div>
+			</div>
+			<div class="row" style="margin-top: 10px;">
+				<div class="col-md-2 col-3" style="float: right;">
+					<span for="only" class="input-label" style="margin-bottom: 0;text-align: center;float: right;padding-top:5px;">是否唯一&nbsp;:</span>
+				</div>
+				<div class="col-md-3 col-9">
+					<select id="only" class="form-control">
+						<option value="1" selected="selected">&nbsp;唯一</option>
+						<option value="2">&nbsp;不唯一</option>
+					</select>
+				</div>
+			</div>
+			<p align="center" style="margin-top: 5%;">
+				<button class="col-lg-2 col-sm-8 btn-success" id="start" style="border-radius: 5px;height: 40px;border: 0px;	">生成</button>
+				<button class="col-lg-2 col-sm-8 btn-success" id="stop" style="border-radius: 5px;height: 40px;border: 0px;display: none;	">结束</button>
+			</p>
+			<h1 class="random_font" id="shu">&nbsp;</h1>
+
+		</div>
+		<p class="container remarks">备注：为了在线生成随机数，需要确定两个量：首先，需要生成多少个随机数（即数字）；第二，随机数的范围(即最小值和最大 值）。将数据填入下表中的空白处，然后单击“生成”生成。
+		</p>
+
+        <p class="container text-center">
+            友情链接:<a href="https://oil-now.com" style="margin-left: 10px;">今日油价</a>
+        </p>
+	</body>
+	<script>
+		var timer;
+		var cz=41;
+		var number = 0;
+		var classname=["蔡律军","钟砥柱","胡欣语","邱雪晴","何嘉缘","张勇","何玮祺","朱泓玥","邹浩斌","黄志晟","徐方程","危远豪","张海娟","江志字","高嘉雯","吴必文","丁彦开","张志超","王嘉磊","吴皓东","周凯","黄延瑞","洪志坤","陈昕宇","李诗琴","刘志涛","陈礼春","李麒辉","朱诗涵","刘可晗","郭静怡","吴文康","林子晗","陈潇楠","黄承志","郑珮霖","张文浩","刘俊杰","余樱漫","肖楚煜","蔡正澍","章舒雅","饶璟涵","江雅萱","张炎智","高娜朗媛","谢榆瑾","林胜"];
+		var other=[0,7,16,12,20,23,32,33,35,37,38];
+		function random_number(min, max) {
+			var rand = parseInt(Math.random() * (max - min + 1) + min);
+			if(max==48){
+				if(!array_contain(other, rand)) {
+					return classname[rand-1];
+				}else{
+					rand=cz;
+					return classname[rand-1];
+				}
+			}
+			return rand;
+		}
+
+		function array_contain(array, obj) {
+			for(var i = 0; i < array.length; i++) {
+				if(array[i] == obj) //如果要求数据类型也一致，这里可使用恒等号===
+					return true;
+			}
+			return false;
+		}
+
+		window.onload = function() {
+			var container = document.getElementById("shu"),
+				start = document.getElementById("start"),
+				stop = document.getElementById("stop");
+			//事件调用
+			start.onclick = play;
+			stop.onclick = end;
+
+			//添加回车键和空格键事件事件，摁下回车开始，再次摁下结束，空格键如此;
+			document.onkeyup = function(event) {
+				event = event || window.event;
+				//console.log(event.keyCode);
+				if(event.keyCode == 13 || event.keyCode == 32) {
+					if(number == 0) {
+						play();
+						number = 1;
+					} else {
+						end();
+						number = 0;
+					}
+				}
+			}
+
+			//开始函数
+			function play() {
+				clearInterval(timer);
+				timer = setInterval(function() {
+					start.style.display = "none";
+					stop.style.display = "block";
+					var x = document.getElementById("min").value;
+					var y = document.getElementById("max").value;
+					var shu = document.getElementById("shumu").value;
+					var only = document.getElementById("only").value;
+					var data = [];
+					for(var i = 0; i < 10000; i++) {
+						if(data.length >= shu) {
+							break;
+						}
+						var rand = random_number(x, y);
+						if(only == 1) {
+							if(!array_contain(data, rand)) {
+								data.push(rand + " ")
+							}
+						} else {
+							data.push(rand + " ")
+						}
+
+					}
+					container.innerText = data.join(" ");
+					start.classList.remove("btn-success");
+					start.classList.add("btn-primary");
+					stop.classList.add("btn-danger");
+				}, 100);
+			}
+
+			//停止函数
+			function end() {
+				stop.style.display = "none";
+				start.style.display = "block";
+				clearInterval(timer);
+				stop.classList.remove("btn-danger");
+				stop.classList.add("btn-info");
+				start.classList.remove("btn-primary");
+				start.classList.add("btn-success");
+
+			}
+		}
+	</script>
+</html>
