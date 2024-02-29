@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 test git 
 
 new change
@@ -5,3 +6,10 @@ new change
 add a new line
 
 add another line
+=======
+
+ ²ÙÄãÂè
+ ²ÙÄãÂè
+ ²ÙÄãÂè
+ ²ÙÄãÂè
+>>>>>>> 6c8637a (update)

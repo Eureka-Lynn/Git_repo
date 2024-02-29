@@ -1,0 +1,14 @@
+def is_string_isogram(word):
+    # 将单词转换为小写
+    word = word.lower()
+    # 在此处编写你的代码
+    n=len(word)
+    h=len(set(word))
+    if n==h:
+        return True
+    else:
+        return False
+# 从用户处获取输入
+word = input()
+# 调用函数
+print(is_string_isogram(word))
