@@ -8,6 +8,8 @@ df=(pd.read_csv(fpath))
 
 # 时长转换为分钟
 df.loc[:,'time']=df['时长']/60
+df['time']=df['time'].astype('int32')
+
 
 print(df.describe())
 print('==========================================')
