@@ -11,12 +11,17 @@
 #         return b
 
 
-class Soulution():
+class Solution():
     def secondHighest(self,s:str):
         l=[]
         for c in s:
             if c.isdigit():
                 c=int(c)
                 l.append(c)
-        n=len(c)
-        
+        a=b=-1
+        for i in l:
+            if i>a:
+                a,b=i,a
+            elif b<i<a:
+                b=i
+        return b
