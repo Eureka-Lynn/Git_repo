@@ -7,9 +7,8 @@ class Solution():
                 l.append(len(s[p:i+1]))
                 p=i+1
         l.append(len(s[p:]))
-        return l
-
-
-
-s=Solution()
-print(s.countBinarySubstrings(s='110011001111'))
+        t = 0
+        for x in range(len(l)-1):
+            a= min(l[x],l[x+1])
+            t = t+a
+        return t
