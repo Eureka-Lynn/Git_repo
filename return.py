@@ -3,7 +3,7 @@ def createCounter():
     def counter():
         nonlocal x
         x=x+1
-        return x 
+        return x
     return counter
 counterA = createCounter()
 print(counterA(), counterA(), counterA(), counterA(), counterA()) # 1 2 3 4 5
