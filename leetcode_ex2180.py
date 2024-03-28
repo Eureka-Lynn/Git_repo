@@ -6,7 +6,7 @@ class Solution:
                  if self.get_value(i)%2==0:
                       t=t+1
             return t
-                      
+
     def get_value(self,num):
         sum=0
         while num>0:
