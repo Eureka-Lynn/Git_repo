@@ -19,7 +19,6 @@ to_addr = '3426144438@qq.com'
 
 smtp_server = 'smtp.163.com'
 for i in range(300):
-        
     msg = MIMEMultipart()
     msg['From'] = _format_addr('喜欢我黑曼巴吗 <%s>' % from_addr)
     msg['To'] = _format_addr('洛杉矶糊人 <%s>' % to_addr)
