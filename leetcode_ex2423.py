@@ -15,4 +15,4 @@ class Solution:
                 elif L[-1]==L[-2]+1 and len(set(L[:-1]))==1 :
                     return True
                 else:
-                    return False 
+                    return False
