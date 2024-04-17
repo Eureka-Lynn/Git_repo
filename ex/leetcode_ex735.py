@@ -1,18 +1,15 @@
 class Solution:
-    def asteroidCollision(self, asteroids: list[int]) -> list[int]:
+    def asteroidCollision(self, asteroids: List[int]) -> List[int]:
         ans = []
         for i in asteroids:
-            ans.append(i)
-            if len(ans) >= 2:
-                if ans[-1] < 0 and ans[-2] > 0:
-                    if ans[-2] < ans[-1]:
-                        del ans[-2]
-                    if ans[-2] == ans[-1]:
-                        del ans[-1]
-                        del ans[-1]
-                    if ans[-2] > ans[-1]:
-                        del ans[-1]
+            add = True
+            if i < 0:
+                while ans and ans[-1] >0 and ans[-1] < -i:
+                    ans.pop()
+                if ans and ans[-1] > 0:
+                    add = False
+                    if ans[-1] == -i:
+                        ans.pop()
+            if add:
+                ans.append(i)
         return ans
-
-s = Solution()
-print(s.asteroidCollision([1,-2,-2,-2]))
