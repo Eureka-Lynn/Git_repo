@@ -1,0 +1,5 @@
+2024/04/29 17:11:39.311 => Open \\.\COM9 failed:5
+2024/04/29 17:11:39.311 => OpenSerial: Com=9 BaudRate=256000, Success=0
+2024/04/29 17:11:41.955 => Open \\.\COM9 failed:5
+2024/04/29 17:11:41.955 => OpenSerial: Com=9 BaudRate=256000, Success=0
+2024/04/29 17:11:46.095 => Cancel Read Data

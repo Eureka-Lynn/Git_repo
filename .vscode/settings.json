@@ -38,5 +38,6 @@
     "files.associations": {
         ".mpyproject.json": "jsonc"
     },
-    "python.analysis.typeCheckingMode": "basic"
+    "python.analysis.typeCheckingMode": "basic",
+    "cmake.sourceDirectory": "D:/PY/pico-sdk"
 }
