@@ -38,7 +38,7 @@ while True:
                 target_x_xcoordinate_mm = 0 - target_x_xcoordinate_mm
 
         if target_x_ycoordinate_bin[2] == 1:
-            if target_x_ycoordinate_mm > 32768:
+            if target_x_ycoordinate_mm > 3276w8:
                 target_x_xcoordinate_mm = target_x_ycoordinate_mm - 32768
         elif target_x_ycoordinate_bin[2] == 0:
             if target_x_ycoordinate_mm > -32768:
