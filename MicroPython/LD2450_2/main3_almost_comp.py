@@ -5,10 +5,11 @@ def r(x,y):
 
 uart = UART(0, baudrate=256000, tx = 0, rx = 1)
 
-lora = UART(1,baudrate=9600,tx = 1 , rx = 1)
+lora = UART(1,baudrate=9600,tx = 8, rx = 9)
 
-led = PWM(Pin(11,Pin.OUT))
+led = PWM(Pin(2,Pin.OUT))
 led.freq(1000)
+led_duty = 0
 
 while True:
     data = uart.read()
@@ -189,32 +190,23 @@ while True:
             target_3_r = float('inf')
 
         if target_1_status or target_2_status or target_3_status:
+            print('LoRa total write:',end='')
             lora.write('message')
         if lora_data == 'message':
             distance = min(target_1_r,target_2_r,target_3_r,90)
         else:
             distance = min(target_1_r,target_2_r,target_3_r)
-        print(distance)
-        if distance <= 20:
-            current = 100
-        elif distance > 20 and distance <= 40:
-            current = 80
-        elif distance > 40 and distance <= 60:
-            current = 60
-        elif distance > 60 and distance <= 80:
-            current = 40
-        elif distance > 80 and distance < 100:
-            current = 20
-        elif distance >= 100:
-            current = 0
+        if distance <= 100:
+            current = 120 - distance
+        print('distance',distance)
+        if current >= led_duty :
+            while led_duty <= current-1:
+                led_duty += 1
+                led.duty_u16(int(led_duty * 655.36))
+        if current <= led_duty:
+            while led_duty >= current+1:
+                led_duty -= 1
+                led.duty_u16(int(led_duty * 655.36))
         led.duty_u16(int(current * 655.36))
-        # if current >= led_duty :
-            # while led_duty <= current-1:
-            #     led_duty += 1
-            #     led.duty_u16(int(led_duty * 655.36))
-        # if current <= led_duty:
-            # while led_duty >= current+1:
-            #     led_duty -= 1
-            #     led.duty_u16(int(led_duty * 655.36))
-
+        print('LED_Duty:',current)
         time.sleep(0.1)
