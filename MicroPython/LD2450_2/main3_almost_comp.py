@@ -207,6 +207,5 @@ while True:
             while led_duty >= current+1:
                 led_duty -= 1
                 led.duty_u16(int(led_duty * 655.36))
-        led.duty_u16(int(current * 655.36))
         print('LED_Duty:',current)
         time.sleep(0.1)
