@@ -24,7 +24,7 @@ while True:
     if data:
         target_data = data[7:-4]
         match data[0]:
-            case '01':
+            case 0x01:
                 target_state = True
             case _:
                 target_state = False

@@ -1,22 +1,17 @@
 from machine import Pin,PWM
-import utime
+import time
 
-LED = PWM(Pin(2))
+LED = PWM(Pin(1))
 
 LED.freq(1000)
 LED_duty = 0
 LED.duty_u16(0)
 
 while True:
-    current = int(input('enter'))
-    if current >= LED_duty :
-       while LED_duty <= current-1:
-           LED_duty += 1
-           LED.duty_u16(int(LED_duty * 655.36))
-           utime.sleep(0.01)
-    if current <= LED_duty:
-        while LED_duty >= current+1:
-            LED_duty -= 1
-            LED.duty_u16(int(LED_duty * 655.36))
-            utime.sleep(0.01)
-    print(LED_duty)
+    while LED_duty <= 65535:
+        LED_duty += 1
+        LED.duty_u16(LED_duty)
+    while LED_duty > 0:
+        LED_duty -= 1
+        LED.duty_u16(LED_duty)
+    time.sleep((0.1))
