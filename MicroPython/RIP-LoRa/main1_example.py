@@ -8,6 +8,7 @@ uart = UART(1, baudrate=9600, tx=Pin(4), rx=Pin(5))
 # Constants
 MAX_DISTANCE = 100  # Maximum detection distance of the radar in centimeters
 MAX_BRIGHTNESS = 100  # Maximum brightness of the lights
+RANGE_THRESHOLD = 50  # Threshold for maximum brightness range
 
 # Function to detect presence of a person using radar
 def detect_person():
@@ -26,9 +27,9 @@ def get_distance():
 def generate_node_id():
     return int(time.time() * 1000) % 10000
 
-# Function to broadcast node_id and brightness
-def broadcast_message(node_id, brightness):
-    message = f'DISCOVERY:{node_id}:{brightness}'
+# Function to broadcast node_id, brightness, and timestamp
+def broadcast_message(node_id, brightness, timestamp):
+    message = f'DISCOVERY:{node_id}:{brightness}:{timestamp}'
     uart.write(message + '\n')
 
 # Function to receive message from UART
@@ -41,9 +42,15 @@ def receive_message():
 # Function to adjust brightness based on distance
 def adjust_brightness(distance):
     if math.isinf(distance):
-        return MAX_BRIGHTNESS  # Set maximum brightness if no person is detected
+        return 0  # Set brightness to 0 if no person is detected
     else:
-        return min(MAX_BRIGHTNESS, MAX_BRIGHTNESS - distance)  # Adjust brightness based on distance
+        return min(MAX_BRIGHTNESS, (MAX_DISTANCE - distance) * (MAX_BRIGHTNESS / MAX_DISTANCE))
+
+# Function to adjust neighbor node's brightness based on received message
+def adjust_neighbor_brightness(neighbor_id, neighbor_brightness):
+    # Adjust neighbor's brightness based on distance or other criteria
+    pass  # Placeholder for actual implementation
+
 
 # Main function to discover neighbors and adjust brightness
 def main():
@@ -54,9 +61,12 @@ def main():
         # Get distance from radar
         distance = get_distance()
 
-        # Broadcast node ID and brightness
+        # Adjust brightness based on distance
         brightness = adjust_brightness(distance)
-        broadcast_message(node_id, brightness)
+
+        # Broadcast node ID, brightness, and timestamp
+        timestamp = time.ticks_ms()
+        broadcast_message(node_id, brightness, timestamp)
 
         # Receive messages from other nodes
         while uart.any():
@@ -65,11 +75,11 @@ def main():
                 parts = message.split(':')
                 neighbor_id = int(parts[1])
                 neighbor_brightness = int(parts[2])
-                # Calculate distance between nodes
-                distance = abs(brightness - neighbor_brightness)
-                # Adjust brightness based on distance
-                adjusted_brightness = min(MAX_BRIGHTNESS, MAX_BRIGHTNESS - distance)
-                print(f'Node {node_id} received brightness from Node {neighbor_id}: {neighbor_brightness}, adjusted brightness: {adjusted_brightness}')
+                neighbor_timestamp = int(parts[3])
+                
+                # Update neighbor brightness if within range threshold
+                if abs(timestamp - neighbor_timestamp) < RANGE_THRESHOLD:
+                    adjust_neighbor_brightness(neighbor_id, neighbor_brightness)
         
         # Delay before next iteration
         time.sleep(1)
