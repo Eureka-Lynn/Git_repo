@@ -66,7 +66,5 @@ def handle_LoRa(message):
     return Node_id,Time_Stamp,Node_Brightness
 
 # 相邻节点发现
-def neighbor_find():
-    current_time = time.time()
-    message = receive_message()
-    handle_LoRa(message)
+def find_neighbor():
+    pass
