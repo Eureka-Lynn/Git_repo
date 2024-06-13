@@ -14,3 +14,5 @@ num = int(input())
 
 # 调用函数 
 print(find_all_factors(num))
+
+print()
