@@ -15,22 +15,34 @@ def get_data(r):
         time_div = each.find('div', class_='time')
         md = time_div.find('i').text
         y = time_div.find('span').text
+        url = each.find('a').get('href')
+        # 这里发现一点，并非所有url都为/info/1004/.....的格式，部分是直接转发微信链接
+        # 对url做一个切片，若首字母为h则说明是转发微信链接
+        if url[0] == 'h':
+            link = url
+            type = 'W_Link'
+        else:
+            link = 'https://www.tjufe.edu.cn/' + url
+            type = 'U_Link'
         all_data.append({
             "abstract": abstract,
             "title": title,
-            "time": y+'-'+md.split('.')[0]
+            "time": y+'-'+md.split('.')[0],
+            'url':link,
+            'url_type':type
         })
 
-# 根据页数爬取数据
+# 按页数爬取数据
 for i in range(1, 126):
     r = requests.get('https://www.tjufe.edu.cn/tcxw/{}.htm'.format(i))
     r.encoding = 'utf-8'
     get_data(r)
+# 新闻首页没法用上面的方式访问，单独写一个
 r = requests.get('https://www.tjufe.edu.cn/tcxw.htm')
 r.encoding = 'utf-8'
 get_data(r)
 
-# 将数据转换为json
-json.dump(all_data, open('1.json', 'w',encoding='utf-8'), indent=4,ensure_ascii=False)
+# 将数据转换为json并存储
+json.dump(all_data, open('dev/dev/1.json', 'w',encoding='utf-8'), indent=4,ensure_ascii=False)
 
 print('over')
