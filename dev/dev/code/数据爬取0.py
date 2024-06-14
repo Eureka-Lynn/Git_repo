@@ -37,12 +37,10 @@ for i in range(1, 126):
     r = requests.get('https://www.tjufe.edu.cn/tcxw/{}.htm'.format(i))
     r.encoding = 'utf-8'
     get_data(r)
-# 新闻首页没法用上面的方式访问，单独写一个
+# 首页没法用上面的方式访问，单独写一个
 r = requests.get('https://www.tjufe.edu.cn/tcxw.htm')
 r.encoding = 'utf-8'
 get_data(r)
 
 # 将数据转换为json并存储
-json.dump(all_data, open('dev/dev/1.json', 'w',encoding='utf-8'), indent=4,ensure_ascii=False)
-
-print('over')
+json.dump(all_data, open('dev/dev/data/1.json', 'w',encoding='utf-8'), indent=4,ensure_ascii=False)
