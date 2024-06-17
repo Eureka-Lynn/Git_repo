@@ -16,7 +16,7 @@ for _ in data:
             contri[i] += 1
             # 记录阅览量
             look_n [i] += int(_['look_num'])
-        # 然后发现了不得了的东西。。。https://www.tjufe.edu.cn/info/1004/21978.htm，这里的供稿单位写成了克思主义学院。。。。。
+        # 然后发现了不得了的东西。。。https://www.tjufe.edu.cn/info/1004/21978.htm，这里的供稿单位写成了 克思主义学院。。。。。
 # 我选择取前十五的单位
 all = contri.most_common(15)
 name = []
@@ -34,7 +34,7 @@ plt.close()
 # 搞平均
 total = []
 for _ in all:
-    # 用一个dict存储每个单位数据
+    # 用一个dict存储每个供稿单位数据
     dict = {
         'Name':_[0],
         'Num':_[1],
@@ -58,7 +58,8 @@ for _ in total:
     ave.append(_[1])
 # 画柱状图
 plt.figure(figsize=(20,8))
-plt.title('供稿单位平均阅读量',fontsize = 20)
+plt.title('供稿单位平均阅读量',fontsize = 30)
 plt.xticks(fontsize = 15,rotation = 15)
+plt.ylabel('平均阅读量',fontsize = 20)
 plt.bar(name,ave)
 plt.savefig('dev/dev/figure/供稿单位平均阅读量.png',dpi = 300)

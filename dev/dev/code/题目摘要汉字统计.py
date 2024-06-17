@@ -43,4 +43,4 @@ for _ in common:
 ax.plot(Word,Times)
 plt.xticks(Word,rotation=60,fontsize = 17)
 plt.yticks(fontsize = 25)
-plt.savefig('dev/dev/figure/标题概述高频词统计.png')
+plt.savefig('dev/dev/figure/标题概述高频词统计.png',dpi = 300)

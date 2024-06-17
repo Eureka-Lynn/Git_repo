@@ -15,7 +15,7 @@ def U_Link_Data(url):
     time = sub_title.find('span',class_= 'time').text
     # 获取点击量稍微麻烦一点，因为它是用一个脚本返回的熬，数据可以通过get另外一个url来获得，只需要更改clickid就行，所以这里获取clickid
     clickid = sub_title.find('script').text.split(',')[2][1:-1]
-    # 网站有基本反爬熬，加个headers模拟用户访问
+    # 网站有简单反爬机制，加个headers模拟用户访问
     headers = {
         'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0'
     }
@@ -56,7 +56,7 @@ def W_Link_Data(url):
     # r_soup = BeautifulSoup(r.text,'lxml')
     # 微信链接能拿的数据有点少,先获取发布时间
     # time = r_soup.find('em',id='publish_time').text
-    # 这里拿发布时间也比较麻烦，是前端通过一个js返回的，是根据时间显示今天昨天发布啥的，像上面那行一样直接爬会返回一个空值
+    # 这里拿发布时间也比较麻烦，是前端通过一个js返回的，目的是根据时间显示是今天还是昨天发布那种，像上面那行一样直接爬会返回一个空值
     # 网页源代码的var ct后面会返回一个时间戳，记录了发布时间，可以通过获取那个时间戳来获得文章发布时间，但是麻烦死了，不搞了......
     # 所以微信发布的文章直接跳过。。。。
     pass
