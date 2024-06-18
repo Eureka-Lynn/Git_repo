@@ -32,7 +32,7 @@ for _ in word_split:
 Word = []
 Times = []
 plt.rcParams['font.family'] = 'FangSong'
-fig,ax = plt.subplots(figsize = (22,12))
+fig,ax = plt.subplots(figsize = (22,13))
 ax.set_xlabel('汉字',fontsize = 30)
 ax.set_ylabel('出现次数',fontsize = 30)
 ax.set_title('高频词统计',fontsize = 50)
@@ -43,4 +43,4 @@ for _ in common:
 ax.plot(Word,Times)
 plt.xticks(Word,rotation=60,fontsize = 17)
 plt.yticks(fontsize = 25)
-plt.savefig('dev/dev/figure/标题概述高频词统计.png',dpi = 300)
+plt.savefig('dev/dev/figure/标题概述高频词统计.png',dpi = 600)
