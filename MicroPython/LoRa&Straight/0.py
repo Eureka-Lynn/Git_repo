@@ -5,10 +5,11 @@ LED = Pin(2,Pin.OUT)
 
 while True:
     mess = uart.read()
-    if mess == b'open':
-        LED.value(1)
-        print('receive')
-    if mess == b'close':
-        LED.value(0)
-        print('receive')
-    time.sleep(0.1)
+    if mess:
+        print('send:',end='')
+        print(mess)
+        print('----------------------------')
+        print('instance:',end='')
+        print(time.time())
+        print('\n')
+        time.sleep(1)
