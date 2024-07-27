@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 plt.rcParams['font.sans-serif'] = ['SimHei']
 
 # 将数据导入pandas中
-with open ('D:/PY/dev/24/B/data/train.csv') as f:
+with open ('D:/PY/dev/24/B/train.csv') as f:
     data = pd.read_csv(f)
     data = data.drop(['id'],axis=1)
 # 使用斯皮尔曼相关系数检验
@@ -31,11 +31,11 @@ print('------------------------------------')
 # plt.show()
 
 # 使用肯德尔相关系数检验
-# Kendall_matrix = data.corr(method='kendall')
-# Kendall_flood_corr = Kendall_matrix['洪水概率'].sort_values(ascending=False)
-# print('Kendall')
-# print(Kendall_flood_corr)
-# print('------------------------------------')
+Kendall_matrix = data.corr(method='kendall')
+Kendall_flood_corr = Kendall_matrix['洪水概率'].sort_values(ascending=False)
+print('Kendall')
+print(Kendall_flood_corr)
+print('------------------------------------')
 # plt.figure(figsize=(15,10))
 # sns.heatmap(Kendall_matrix,annot=True,cmap='coolwarm',center=0)
 # plt.title('Kendall Correlation Matrix')
