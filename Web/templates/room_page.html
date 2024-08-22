@@ -71,24 +71,19 @@
             socket.on('room_update', function(data) {
                 var usersList = document.getElementById('users-list');
                 usersList.innerHTML = ''; // Clear the list
-                
                 // Add users to the list
                 for (var userId in data.users) {
                     var user = data.users[userId];
                     var userItem = document.createElement('li');
                     userItem.className = 'user-item';
-                    
                     var userName = document.createElement('span');
                     userName.className = 'user-name';
                     userName.textContent = user.name;
-                    
                     var userRole = document.createElement('span');
                     userRole.className = 'user-role';
                     userRole.textContent = user.is_owner ? 'Owner' : 'User';
-                    
                     userItem.appendChild(userName);
                     userItem.appendChild(userRole);
-                    
                     usersList.appendChild(userItem);
                 }
             });
