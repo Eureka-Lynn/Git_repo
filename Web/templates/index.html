@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Room Index</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .room-list {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .room {
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to the Game Room Lobby</h1>
+        <a href="{{ url_for('create_room') }}" class="button">Create Room</a>
+        
+        <div class="room-list">
+            <h2>Available Rooms</h2>
+            {% if rooms %}
+                {% for room in rooms %}
+                    <div class="room">
+                        <strong>Room ID:</strong> {{ room['id'] }}<br>
+                        <strong>Room Name:</strong> {{ room['name'] }}<br>
+                        <strong>Number of Players:</strong> {{ room['num_users'] }}<br>
+                        <a href="{{ url_for('register_user', room_id=room['id']) }}" class="button">Join Room</a>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No rooms available.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
