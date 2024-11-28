@@ -7,7 +7,7 @@ uart = UART(0, baudrate=256000, tx = 0, rx = 1)
 
 lora = UART(1,baudrate=9600,tx = 8, rx = 9)
 
-led = PWM(Pin(2,Pin.OUT))
+led = PWM(Pin(25,Pin.OUT))
 led.freq(1000)
 led_duty = 0
 

@@ -1,13 +1,14 @@
 from machine import Pin,UART
 import time
-uart = UART(0,9600)
-# key = Pin(2,Pin.OUT)
+
+uart = UART(0,baudrate=19200)
+
 while True :
-    uart.write('this is a test message from COM3')
-    print('sent message')
-    
-    time.sleep(1)
-    
-    text = uart.readline()    
-    if text:
-        print(text)
+    data = b'COM6'
+    uart.write('A')
+    # if uart.any():
+    #     text = uart.readline()
+    #     print(text)
+    if uart.any():
+        print(uart.readline())
+    time.sleep(0.5)

@@ -1,7 +1,7 @@
 from machine import Pin,PWM
 import utime
 
-LED = PWM(Pin(25))
+LED = PWM(Pin(3))
 
 LED.freq(1000)
 LED.duty_u16(0)
