@@ -2,10 +2,7 @@
 	"folders": [
 		{
 			"name": "RT-Thread MicroPython",
-			"path": "LD2420/test_2420"
-		},
-		{
-			"path": "."
+			"path": "DDEV"
 		}
 	],
 	"settings": {

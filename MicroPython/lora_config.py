@@ -1,9 +1,6 @@
 from machine import Pin,UART
 import time
-uart = UART(0,baudrate=9600)
-
-pin = Pin(28,Pin.OUT)
-pin.value(1)
+uart = UART(0,baudrate=19200)
 
 key = Pin(3,Pin.OUT)
 key.value(0)
