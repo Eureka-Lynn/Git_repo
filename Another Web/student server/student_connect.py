@@ -48,8 +48,7 @@ def main():
             join_topic = "classroom/students/join"
             join_msg = json.dumps({
                 "name": STUDENT_NAME,
-                "id": STUDENT_ID,
-                "status": "online"
+                "student_id": STUDENT_ID
             })
             client.publish(join_topic, join_msg.encode('utf-8'))
             print("Published join message")
