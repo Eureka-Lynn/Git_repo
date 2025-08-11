@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>教师端实时监控</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>学生列表</h1>
+    <ul id="student-list"></ul>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 存储学生数据，key是student_id
+            const students = {};
+
+            // 建立Socket.IO连接，默认连接当前页面所在域和端口
+            const socket = io();
+
+            socket.on('connect', () => {
+                console.log('成功连接到 Socket.IO 服务器');
+            });
+
+            socket.on('connect_error', (err) => {
+                console.error('连接错误:', err);
+            });
+
+            socket.on('disconnect', () => {
+                console.log('已断开与服务器连接');
+            });
+
+            // 监听后端通过SocketIO推送的mqtt_message事件
+            socket.on('mqtt_message', msg => {
+                console.log('收到消息:', msg);
+
+                if(msg.topic === 'classroom/students/join'){
+                    const data = msg.data;
+                    // 确保student_id存在再存储
+                    if(data.student_id){
+                        students[data.student_id] = data;
+                        updateList();
+                    }
+                }
+                // 这里可继续处理其它topic，比如举手状态等
+            });
+
+            // 动态更新学生列表DOM
+            function updateList(){
+                const ul = document.getElementById('student-list');
+                ul.innerHTML = ''; // 清空列表
+
+                Object.values(students).forEach(stu => {
+                    const li = document.createElement('li');
+                    li.textContent = `${stu.name} (${stu.student_id})`;
+                    ul.appendChild(li);
+                });
+
+                console.log('更新学生列表，当前学生数:', Object.keys(students).length);
+            }
+        });
+    </script>
+</body>
+</html>

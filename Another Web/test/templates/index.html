@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>SocketIO 测试</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>SocketIO 测试页面</h1>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const socket = io();
+
+    socket.on('connect', () => {
+        console.log('成功连接到 Socket.IO 服务器');
+        });
+
+    socket.on('mqtt_message', msg => {
+        console.log('收到 mqtt_message 事件:', msg);
+        });
+
+    socket.on('connect_error', (err) => {
+        console.error('连接错误:', err);
+        });
+
+    socket.on('disconnect', () => {
+        console.log('断开连接');
+        });
+    });
+    </script>
+
+</body>
+</html>
