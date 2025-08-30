@@ -11,62 +11,49 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            // 学生数据存储，key是student_id
             const students = {};
 
-            // 1. 先从后端API拉取已有学生信息
-            try {
+            async function fetchStudents() {
                 const res = await fetch('/students');
-                if (!res.ok) throw new Error('获取学生数据失败');
-                const existingStudents = await res.json();
-                existingStudents.forEach(s => {
+                const data = await res.json();
+                data.forEach(s => {
                     students[s.student_id] = s;
                 });
                 updateList();
-            } catch (err) {
-                console.error('加载学生列表错误:', err);
             }
 
-            // 2. 连接 Socket.IO 监听实时mqtt_message推送
-            const socket = io();
-
-            socket.on('connect', () => {
-                console.log('成功连接到 Socket.IO 服务器');
-            });
-
-            socket.on('disconnect', () => {
-                console.log('已断开与服务器连接');
-            });
-
-            socket.on('mqtt_message', msg => {
-                // 只处理学生加入的消息示例
-                if (msg.topic === 'classroom/students/join') {
-                    const data = msg.data;
-                    if (data.student_id) {
-                        students[data.student_id] = data;
-                        updateList();
-                    }
-                }
-                // 你可以在这里处理其它topic，比如举手状态等
-            });
-
-            socket.on('connect_error', (err) => {
-                console.error('连接错误:', err);
-            });
-
-            // 更新学生列表DOM
             function updateList() {
                 const ul = document.getElementById('student-list');
-                ul.innerHTML = ''; // 清空列表
-
+                ul.innerHTML = '';
                 Object.values(students).forEach(stu => {
                     const li = document.createElement('li');
                     li.textContent = `${stu.name} (${stu.student_id})`;
+                    if (stu.hand_raised) {
+                        const btn = document.createElement('button');
+                        btn.textContent = '取消举手';
+                        btn.onclick = async () => {
+                            const resp = await fetch(`/cancel_hand_raise/${stu.student_id}`, {method: 'POST'});
+                            if (resp.ok) {
+                                stu.hand_raised = false;
+                                updateList();
+                            }
+                        };
+                        li.appendChild(btn);
+                    }
                     ul.appendChild(li);
                 });
-
-                console.log('学生列表已更新，当前学生数:', Object.keys(students).length);
             }
+
+            await fetchStudents();
+
+            const socket = io();
+            socket.on('mqtt_message', msg => {
+                if (msg.topic === 'classroom/students/join' || msg.topic === 'classroom/students/hand_raise') {
+                    const sid = msg.data.student_id;
+                    students[sid] = msg.data;
+                    updateList();
+                }
+            });
         });
     </script>
 </body>
