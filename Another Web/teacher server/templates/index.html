@@ -2,15 +2,15 @@
 <html>
 <head>
     <meta charset="UTF-8" />
-    <title>教师端控制</title>
+    <title>教师端实时监控</title>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <style>
         body {
-            font-family: "Microsoft YaHei", sans-serif;
-            background: #fafafa;
             margin: 0;
+            font-family: "Microsoft YaHei", sans-serif;
             display: flex;
             height: 100vh;
+            background: #fafafa;
         }
 
         /* 左侧学生列表 */
@@ -25,6 +25,7 @@
         ul {
             list-style: none;
             padding: 0;
+            margin: 0;
         }
         li {
             background: #fff;
@@ -53,14 +54,14 @@
             background: #0056b3;
         }
 
-        /* 右侧 debug 状态栏 */
+        /* 右侧 debug 日志 */
         #debug-log {
             width: 350px;
+            height: 100vh;
             background: #1e1e1e;
             color: #fff;
             font-family: monospace;
             overflow-y: auto;
-            height: 100vh;
             padding: 10px;
             box-sizing: border-box;
             box-shadow: -2px 0 5px rgba(0,0,0,0.2);
@@ -71,9 +72,9 @@
             padding-bottom: 5px;
         }
         #log-list {
+            margin: 0;
             padding-left: 0;
             list-style: none;
-            margin: 0;
         }
         #log-list li {
             margin-bottom: 4px;
@@ -90,7 +91,7 @@
 
     <!-- 右侧 debug 日志 -->
     <div id="debug-log">
-        <h3>Debug Log</h3>z
+        <h3>Debug Log</h3>
         <ul id="log-list"></ul>
     </div>
 
@@ -133,9 +134,9 @@
                 li.textContent = `[${time}] ${msg}`;
 
                 // 设置颜色
-                if (msg.includes("学生上线")) li.style.color = "lime";
-                else if (msg.includes("状态更新")) li.style.color = "orange";
-                else if (msg.includes("教师端控制")) li.style.color = "cyan";
+                if (msg.includes("上线")) li.style.color = "lime";
+                else if (msg.includes("学生状态更新")) li.style.color = "orange";
+                else if (msg.includes("教师端")) li.style.color = "cyan";
                 else li.style.color = "#fff";
 
                 logList.appendChild(li);
@@ -146,10 +147,8 @@
                     logList.removeChild(logList.firstChild);
                 }
 
-                // 使用 setTimeout 确保 DOM 渲染完成后再滚动
-                setTimeout(() => {
-                    logList.scrollTop = logList.scrollHeight;
-                }, 0);
+                // 使用 scrollIntoView 保证最后一条日志可见
+                li.scrollIntoView({ behavior: 'smooth', block: 'end' });
             }
 
             // ---------- 初始化加载学生 ----------
