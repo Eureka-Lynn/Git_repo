@@ -36,25 +36,38 @@ def on_message(client, userdata, msg):
     msg_type = data.get("type")
     sid = str(data.get("student_id", ""))
 
-    # 学生上线
+    # ---------- 学生上线 ----------
     if msg_type == "join" and sid:
         students[sid] = {
             "name": data.get("name", "未知"),
             "student_id": sid,
-            "hand_raised": False
+            "hand_raised": False,
+            "online": True           # 新增在线状态
         }
         debug_log(f"学生上线: {students[sid]}")
         socketio.emit('mqtt_message', {'topic': 'join', 'data': students[sid]})
         return
 
-    # 学生举手/放下
+    # ---------- 学生举手/放下 ----------
     if sid and "hand_raised" in data:
         if sid not in students:
-            students[sid] = {"name": "未知", "student_id": sid}
+            students[sid] = {"name": "未知", "student_id": sid, "online": True}
         students[sid]["hand_raised"] = bool(data["hand_raised"])
+        students[sid]["online"] = True   # 学生有动作，视为在线
         debug_log(f"学生状态更新: {students[sid]}")
         socketio.emit('mqtt_message', {'topic': 'hand_raise', 'data': students[sid]})
         return
+
+    # ---------- 学生离线（LWT） ----------
+    if msg_type == "lwt" and sid:
+        debug_log(f"学生离线: {data.get('name', '未知')} ({sid})")
+        if sid not in students:
+            students[sid] = {"name": data.get("name", "未知"), "student_id": sid}
+        students[sid]["hand_raised"] = False
+        students[sid]["online"] = False   # 标记离线
+        socketio.emit('mqtt_message', {'topic': 'lwt', 'data': students[sid]})
+        return
+
 
 
 @app.route('/')

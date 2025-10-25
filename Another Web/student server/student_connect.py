@@ -90,6 +90,15 @@ def main():
         try:
             client = MQTTClient(client_id, MQTT_BROKER, keepalive=60)
             client.set_callback(on_message)
+            # 添加 LWT（离线消息）
+            lwt_msg = json.dumps({
+                "type": "lwt",
+                "student_id": STUDENT_ID,
+                "name": STUDENT_NAME
+            })
+            
+            client.set_last_will("classroom", lwt_msg.encode('utf-8'), retain=True, qos=1)
+            
             client.connect()
 
             # 上线消息

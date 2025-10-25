@@ -15,6 +15,7 @@
 
         /* 左侧学生列表 */
         #left-panel {
+
             flex: 1;
             padding: 20px;
             overflow-y: auto;
@@ -103,29 +104,43 @@
 
             // ---------- 更新学生列表 ----------
             function updateList() {
-                studentList.innerHTML = '';
-                Object.values(students).forEach(stu => {
-                    const li = document.createElement('li');
-                    li.className = stu.hand_raised ? 'raised' : '';
-                    li.textContent = `${stu.name} (${stu.student_id})`;
+    studentList.innerHTML = '';
+    Object.values(students).forEach(stu => {
+        const li = document.createElement('li');
 
-                    if (stu.hand_raised) {
-                        const btn = document.createElement('button');
-                        btn.textContent = '放下';
-                        btn.onclick = async () => {
-                            const resp = await fetch(`/cancel_hand_raise/${stu.student_id}`, { method: 'POST' });
-                            if (resp.ok) {
-                                stu.hand_raised = false;
-                                updateList();
-                                addLog(`点击放下 ${stu.name} (${stu.student_id})`);
-                            }
-                        };
-                        li.appendChild(btn);
-                    }
+        // 举手背景色
+        li.className = stu.hand_raised ? 'raised' : '';
 
-                    studentList.appendChild(li);
-                });
-            }
+        // 学生名和ID
+        li.textContent = `${stu.name} (${stu.student_id})`;
+
+        // 在线状态显示
+        const statusSpan = document.createElement('span');
+        statusSpan.style.marginLeft = '10px';
+        statusSpan.style.fontSize = '12px';
+        statusSpan.style.color = stu.online ? 'green' : 'gray';
+        statusSpan.textContent = stu.online ? '在线' : '离线';
+        li.appendChild(statusSpan);
+
+        // 举手按钮（仅在线学生可操作）
+        if (stu.hand_raised && stu.online) {
+            const btn = document.createElement('button');
+            btn.textContent = '放下';
+            btn.onclick = async () => {
+                const resp = await fetch(`/cancel_hand_raise/${stu.student_id}`, { method: 'POST' });
+                if (resp.ok) {
+                    stu.hand_raised = false;
+                    updateList();
+                    addLog(`点击放下 ${stu.name} (${stu.student_id})`);
+                }
+            };
+            li.appendChild(btn);
+        }
+
+        studentList.appendChild(li);
+    });
+}
+
 
             // ---------- 更新 debug 日志 ----------
             function addLog(msg) {
@@ -171,13 +186,21 @@
 
                 if (topic === 'join') {
                     students[sid] = data;
+                    students[sid].online = true; // 上线标记
                     addLog(`学生上线: ${data.name} (${sid})`);
                 } else if (topic === 'hand_raise') {
                     if (!students[sid]) students[sid] = data;
                     students[sid].hand_raised = data.hand_raised;
+                    students[sid].online = true; // 有动作说明在线
                     addLog(`学生状态更新: ${data.name} (${sid}) -> ${data.hand_raised ? '举手' : '放下'}`);
+                } else if (topic === 'lwt') {
+                    if (!students[sid]) students[sid] = data;
+                    students[sid].hand_raised = false;
+                    students[sid].online = false; // 标记离线
+                    addLog(`学生离线: ${data.name} (${sid})`);
                 }
-                updateList();
+
+                updateList(); // 确保每次状态更新都会刷新列表
             });
 
             // debug 信息
