@@ -2,57 +2,188 @@
 <html>
 <head>
     <meta charset="UTF-8" />
-    <title>教师端实时监控</title>
+    <title>教师端控制</title>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background: #fafafa;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* 左侧学生列表 */
+        #left-panel {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        h1 {
+            color: #333;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .raised {
+            background: #ffeaea;
+            border-color: #ffb3b3;
+        }
+        button {
+            background: #007bff;
+            border: none;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+
+        /* 右侧 debug 状态栏 */
+        #debug-log {
+            width: 350px;
+            background: #1e1e1e;
+            color: #fff;
+            font-family: monospace;
+            overflow-y: auto;
+            height: 100vh;
+            padding: 10px;
+            box-sizing: border-box;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+        }
+        #debug-log h3 {
+            margin-top: 0;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+        }
+        #log-list {
+            padding-left: 0;
+            list-style: none;
+            margin: 0;
+        }
+        #log-list li {
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+    </style>
 </head>
 <body>
-    <h1>学生列表</h1>
-    <ul id="student-list"></ul>
+    <!-- 左侧学生列表 -->
+    <div id="left-panel">
+        <h1>学生列表</h1>
+        <ul id="student-list"></ul>
+    </div>
+
+    <!-- 右侧 debug 日志 -->
+    <div id="debug-log">
+        <h3>Debug Log</h3>z
+        <ul id="log-list"></ul>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const students = {};
+            const studentList = document.getElementById('student-list');
+            const logList = document.getElementById('log-list');
 
-            async function fetchStudents() {
-                const res = await fetch('/students');
-                const data = await res.json();
-                data.forEach(s => {
-                    students[s.student_id] = s;
-                });
-                updateList();
-            }
-
+            // ---------- 更新学生列表 ----------
             function updateList() {
-                const ul = document.getElementById('student-list');
-                ul.innerHTML = '';
+                studentList.innerHTML = '';
                 Object.values(students).forEach(stu => {
                     const li = document.createElement('li');
+                    li.className = stu.hand_raised ? 'raised' : '';
                     li.textContent = `${stu.name} (${stu.student_id})`;
+
                     if (stu.hand_raised) {
                         const btn = document.createElement('button');
-                        btn.textContent = '取消举手';
+                        btn.textContent = '放下';
                         btn.onclick = async () => {
-                            const resp = await fetch(`/cancel_hand_raise/${stu.student_id}`, {method: 'POST'});
+                            const resp = await fetch(`/cancel_hand_raise/${stu.student_id}`, { method: 'POST' });
                             if (resp.ok) {
                                 stu.hand_raised = false;
                                 updateList();
+                                addLog(`点击放下 ${stu.name} (${stu.student_id})`);
                             }
                         };
                         li.appendChild(btn);
                     }
-                    ul.appendChild(li);
+
+                    studentList.appendChild(li);
                 });
             }
 
+            // ---------- 更新 debug 日志 ----------
+            function addLog(msg) {
+                const li = document.createElement('li');
+                const time = new Date().toLocaleTimeString();
+                li.textContent = `[${time}] ${msg}`;
+
+                // 设置颜色
+                if (msg.includes("学生上线")) li.style.color = "lime";
+                else if (msg.includes("状态更新")) li.style.color = "orange";
+                else if (msg.includes("教师端控制")) li.style.color = "cyan";
+                else li.style.color = "#fff";
+
+                logList.appendChild(li);
+
+                // 限制最大条数
+                const maxLogs = 200;
+                while (logList.children.length > maxLogs) {
+                    logList.removeChild(logList.firstChild);
+                }
+
+                // 使用 setTimeout 确保 DOM 渲染完成后再滚动
+                setTimeout(() => {
+                    logList.scrollTop = logList.scrollHeight;
+                }, 0);
+            }
+
+            // ---------- 初始化加载学生 ----------
+            async function fetchStudents() {
+                const res = await fetch('/students');
+                const data = await res.json();
+                data.forEach(s => { students[s.student_id] = s; });
+                updateList();
+            }
             await fetchStudents();
 
+            // ---------- Socket.IO ----------
             const socket = io();
+
+            // 学生上线 / 举手状态更新
             socket.on('mqtt_message', msg => {
-                if (msg.topic === 'classroom/students/join' || msg.topic === 'classroom/students/hand_raise') {
-                    const sid = msg.data.student_id;
-                    students[sid] = msg.data;
-                    updateList();
+                const topic = msg.topic;
+                const data = msg.data;
+                const sid = data.student_id;
+
+                if (topic === 'join') {
+                    students[sid] = data;
+                    addLog(`学生上线: ${data.name} (${sid})`);
+                } else if (topic === 'hand_raise') {
+                    if (!students[sid]) students[sid] = data;
+                    students[sid].hand_raised = data.hand_raised;
+                    addLog(`学生状态更新: ${data.name} (${sid}) -> ${data.hand_raised ? '举手' : '放下'}`);
                 }
+                updateList();
+            });
+
+            // debug 信息
+            socket.on('debug_message', data => {
+                addLog(data.message);
             });
         });
     </script>

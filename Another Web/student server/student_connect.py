@@ -6,11 +6,18 @@ import json
 from umqtt.robust import MQTTClient
 
 # ---------- 配置 ----------
-SSID = "HUAWEI-B919WJ"
-PASSWORD = "lpq200531"
-MQTT_BROKER = "192.168.3.13"
+SSID = "王帅什么时候能上S"
+PASSWORD = "wangshuaicaonima"
+MQTT_BROKER = "192.168.3.111"  # ← 教师端电脑IP
 STUDENT_NAME = "张三"
 STUDENT_ID = "200511"
+
+# ---------- 引脚定义 ----------
+BUTTON_PIN = 14  # 按钮连接的GPIO引脚
+LED_PIN = 15     # LED连接的GPIO引脚
+
+button = machine.Pin(BUTTON_PIN, machine.Pin.IN, machine.Pin.PULL_UP)
+led = machine.Pin(LED_PIN, machine.Pin.OUT)
 
 # 学生状态
 STUDENT_STATE = {
@@ -34,31 +41,56 @@ def on_message(topic, msg):
         print("JSON解析失败:", e)
         return
 
-    # 处理教师端取消举手
-    if data.get("student_id") == STUDENT_ID:
-        hand_raised = data.get("hand_raised", False)
-        STUDENT_STATE["hand_raised"] = hand_raised
-        print(f"收到取消举手消息，hand_raised={hand_raised}")
+    # 只处理发给自己的消息
+    if data.get("student_id") != STUDENT_ID:
+        return
+
+    # 教师端控制取消举手
+    hand_raised = data.get("hand_raised", False)
+    STUDENT_STATE["hand_raised"] = hand_raised
+    led.value(1 if hand_raised else 0)
+    print(f"教师端控制: hand_raised={hand_raised}")
 
 # ---------- MQTT 循环 ----------
 def mqtt_loop(client):
     last_ping = time.time()
+    last_button_state = button.value()
+
     while True:
-        try:
-            client.check_msg()
-            if time.time() - last_ping > 30:
-                client.ping()
-                last_ping = time.time()
-            time.sleep(0.1)
-        except OSError as e:
-            print("连接丢失，重连中...", e)
-            raise e
+        client.check_msg()  # 处理接收消息
+
+        # 按钮检测（下降沿触发）
+        current_button_state = button.value()
+        if last_button_state == 1 and current_button_state == 0:
+            # 按下按钮，切换举手状态
+            STUDENT_STATE["hand_raised"] = not STUDENT_STATE["hand_raised"]
+
+            led.value(1 if STUDENT_STATE["hand_raised"] else 0)
+
+            # 发送状态到教师端
+            payload = json.dumps({
+                "student_id": STUDENT_ID,
+                "hand_raised": STUDENT_STATE["hand_raised"]
+            })
+            client.publish("classroom", payload.encode('utf-8'))
+            print(f"发布举手状态: {payload}")
+
+            time.sleep(0.2)  # 防抖
+
+        last_button_state = current_button_state
+
+        # 定期发送心跳
+        if time.time() - last_ping > 30:
+            client.ping()
+            last_ping = time.time()
+
+        time.sleep(0.05)
 
 # ---------- 主函数 ----------
 def main():
     connect_wifi(SSID, PASSWORD)
     client_id = b"pico_" + ubinascii.hexlify(machine.unique_id())
-    
+
     while True:
         try:
             client = MQTTClient(client_id, MQTT_BROKER, keepalive=60)
@@ -66,50 +98,22 @@ def main():
             client.connect()
 
             # 发布上线消息
-            join_topic = "classroom/students/join"
             join_msg = json.dumps({
+                "type": "join",
                 "name": STUDENT_NAME,
                 "student_id": STUDENT_ID
             })
-            client.publish(join_topic, join_msg.encode('utf-8'))
+            client.publish("classroom", join_msg.encode('utf-8'))
             print("已发布上线消息")
 
-            # 订阅教师端取消举手消息
-            hand_raise_topic = "classroom/students/hand_raise"
-            client.subscribe(hand_raise_topic)
-            print("已订阅取消举手主题")
-
-            # ---------- 虚拟举手示例 ----------
-            # 可以用按键替代下面的虚拟触发
-            time.sleep(5)  # 等待 5 秒后虚拟举手
-            STUDENT_STATE["hand_raised"] = True
-            client.publish(hand_raise_topic, json.dumps({
-                "student_id": STUDENT_ID,
-                "hand_raised": True
-            }))
-            print("已虚拟举手")
+            # 订阅教师端指令
+            client.subscribe("classroom")
+            print("已订阅 classroom 主题")
 
             mqtt_loop(client)
 
         except OSError as e:
-            print("错误，5秒后重试...", e)
+            print("连接丢失，5秒后重试...", e)
             time.sleep(5)
 
 main()
-
-
-"""
-测试用例
-classroom/students/join
-{
-  "name": "张三",
-  "student_id": "200511"
-}
-
-classroom/students/hand_raise
-{
-  "student_id": "200511",
-  "hand_raised": true
-}
-
-"""

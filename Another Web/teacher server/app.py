@@ -1,3 +1,5 @@
+# 记得PATH # $env:GEVENT_SUPPORT="True"
+
 from gevent import monkey
 monkey.patch_all()
 
@@ -9,34 +11,51 @@ from flask_socketio import SocketIO
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
 
-MQTT_BROKER = '192.168.3.13'
+MQTT_BROKER = '192.168.3.111'
 MQTT_PORT = 1883
-MQTT_TOPIC = 'classroom/#'
+MQTT_TOPIC = 'classroom'
 
-# 后端保存学生信息，key为str(student_id)
-students = {}
+students = {}      # { student_id: {name, student_id, hand_raised} }
+mqtt_client = mqtt.Client()
+
+def debug_log(msg):
+    print(msg)
+    socketio.emit('debug_message', {'message': msg})
 
 def on_connect(client, userdata, flags, rc):
-    print("Connected to MQTT broker")
+    debug_log(f"Connected to MQTT broker, rc={rc}")
     client.subscribe(MQTT_TOPIC)
 
 def on_message(client, userdata, msg):
-    data = json.loads(msg.payload.decode())
-    print(f"收到 MQTT 消息: {msg.topic} -> {data}")
+    try:
+        data = json.loads(msg.payload.decode())
+    except Exception as e:
+        debug_log(f"JSON解析失败: {e}")
+        return
 
-    # 学生加入
-    if msg.topic == 'classroom/students/join' and 'student_id' in data:
-        students[str(data['student_id'])] = data
-        # 默认手未举
-        students[str(data['student_id'])]['hand_raised'] = False
-        socketio.emit('mqtt_message', {'topic': msg.topic, 'data': students[str(data['student_id'])]})
+    msg_type = data.get("type")
+    sid = str(data.get("student_id", ""))
 
-    # 学生举手/取消举手
-    if msg.topic == 'classroom/students/hand_raise' and 'student_id' in data:
-        sid = str(data['student_id'])
-        if sid in students:
-            students[sid]['hand_raised'] = data.get('hand_raised', False)
-            socketio.emit('mqtt_message', {'topic': msg.topic, 'data': students[sid]})
+    # 学生上线
+    if msg_type == "join" and sid:
+        students[sid] = {
+            "name": data.get("name", "未知"),
+            "student_id": sid,
+            "hand_raised": False
+        }
+        debug_log(f"学生上线: {students[sid]}")
+        socketio.emit('mqtt_message', {'topic': 'join', 'data': students[sid]})
+        return
+
+    # 学生举手/放下
+    if sid and "hand_raised" in data:
+        if sid not in students:
+            students[sid] = {"name": "未知", "student_id": sid}
+        students[sid]["hand_raised"] = bool(data["hand_raised"])
+        debug_log(f"学生状态更新: {students[sid]}")
+        socketio.emit('mqtt_message', {'topic': 'hand_raise', 'data': students[sid]})
+        return
+
 
 @app.route('/')
 def index():
@@ -50,22 +69,26 @@ def get_students():
 def cancel_hand_raise(student_id):
     sid = str(student_id)
     if sid in students:
-        students[sid]['hand_raised'] = False
-        socketio.emit('mqtt_message', {'topic': 'classroom/students/hand_raise', 'data': students[sid]})
-        # MQTT通知学生端
-        mqtt_client = mqtt.Client()
-        mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
-        mqtt_client.publish('classroom/students/hand_raise', json.dumps({'student_id': sid, 'hand_raised': False}))
-        mqtt_client.disconnect()
+        students[sid]["hand_raised"] = False
+        socketio.emit('mqtt_message', {'topic': 'hand_raise', 'data': students[sid]})
+
+        #MQTT发布
+        payload = json.dumps({
+            "student_id": sid,
+            "hand_raised": False
+        })
+        mqtt_client.publish(MQTT_TOPIC, payload)
+        debug_log(f"教师端控制学生 {sid} 放下手 -> classroom")
         return jsonify({'status': 'ok'})
+
     return jsonify({'status': 'student_not_found'}), 404
 
+#MQTT循环
 def mqtt_loop():
-    mqtt_client = mqtt.Client()
     mqtt_client.on_connect = on_connect
     mqtt_client.on_message = on_message
     mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
-    mqtt_client.loop_forever()
+    mqtt_client.loop_forever()  # 持续循环处理接收消息
 
 if __name__ == '__main__':
     socketio.start_background_task(mqtt_loop)
