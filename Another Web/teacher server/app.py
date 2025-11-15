@@ -11,7 +11,7 @@ from flask_socketio import SocketIO
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
 
-MQTT_BROKER = '192.168.3.111'
+MQTT_BROKER = '192.168.179.196'
 MQTT_PORT = 1883
 MQTT_TOPIC = 'classroom'
 

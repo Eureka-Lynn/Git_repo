@@ -5,9 +5,9 @@ import machine
 import json
 from umqtt.robust import MQTTClient
 
-SSID = "王帅什么时候能上S"
-PASSWORD = "wangshuaicaonima"
-MQTT_BROKER = "192.168.3.111"
+SSID = "test"
+PASSWORD = "12345678"
+MQTT_BROKER = "192.168.179.196"
 STUDENT_NAME = "张三"
 STUDENT_ID = "200511"
 
