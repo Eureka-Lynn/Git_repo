@@ -54,13 +54,11 @@
             const logList = document.getElementById('log-list');
             const btnCancelAll = document.getElementById('btn-cancel-all');
 
-            // 全部放下按钮
             btnCancelAll.onclick = async () => {
                 const resp = await fetch('/cancel_all', { method: 'POST' });
                 if (resp.ok) addLog('🧑‍🏫 教师发起：统一放下所有学生');
             };
 
-            // 更新学生列表显示
             function updateList() {
                 studentList.innerHTML = '';
                 Object.values(students).forEach(stu => {
@@ -68,20 +66,23 @@
                     li.className = stu.hand_raised ? 'raised' : '';
                     if (stu.online === false) li.classList.add('offline');
 
-                    // 左侧：姓名 + client_id + 状态
+                    // 显示姓名和学号
                     const left = document.createElement('div');
-                    left.textContent = `${stu.name} (${stu.client_id}) ${stu.online ? '' : '(离线)'}`;
+                    left.textContent = `${stu.name} (${stu.student_id}) ${stu.online ? '' : '(离线)'}`;
                     li.appendChild(left);
 
-                    // 右侧：按钮或离线提示
                     const right = document.createElement('div');
+
+                    // 只有在线且举手的学生显示“放下”按钮
                     if (stu.hand_raised && stu.online) {
                         const btn = document.createElement('button');
                         btn.textContent = '放下';
                         btn.onclick = async () => {
                             const resp = await fetch(`/cancel_hand_raise/${stu.client_id}`, {method:'POST'});
                             if (resp.ok) {
-                                addLog(`🧑‍🏫 点击放下 ${stu.name} (${stu.client_id})`);
+                                stu.hand_raised = false;
+                                updateList();
+                                addLog(`🧑‍🏫 点击放下 ${stu.name} (${stu.student_id})`);
                             }
                         };
                         right.appendChild(btn);
@@ -90,13 +91,12 @@
                     } else {
                         right.textContent = '';
                     }
-                    li.appendChild(right);
 
+                    li.appendChild(right);
                     studentList.appendChild(li);
                 });
             }
 
-            // 添加日志
             function addLog(msg) {
                 const li = document.createElement('li');
                 const time = new Date().toLocaleTimeString();
@@ -110,7 +110,6 @@
                 li.scrollIntoView({behavior:'smooth', block:'end'});
             }
 
-            // 从后端获取当前学生列表
             async function fetchStudents() {
                 const res = await fetch('/students');
                 const data = await res.json();
@@ -119,7 +118,6 @@
             }
             await fetchStudents();
 
-            // SocketIO 接收 MQTT 消息
             const socket = io();
             socket.on('mqtt_message', msg => {
                 const topic = msg.topic;
@@ -132,15 +130,15 @@
                     students[cid] = data;
                     students[cid].hand_raised = false;
                     students[cid].online = true;
-                    addLog(`学生上线: ${data.name} (${cid})`);
+                    addLog(`学生上线: ${data.name} (${data.student_id})`);
                 } else if (topic === 'hand_raise') {
                     students[cid].hand_raised = data.hand_raised;
-                    students[cid].online = data.online !== undefined ? data.online : true;
-                    addLog(`学生状态更新: ${data.name} (${cid}) -> ${data.hand_raised ? '举手' : '放下'}`);
+                    students[cid].online = data.online !== undefined ? data.online : (students[cid].online !== false);
+                    addLog(`学生状态更新: ${data.name} (${data.student_id}) -> ${data.hand_raised ? '举手' : '放下'}`);
                 } else if (topic === 'lwt') {
                     students[cid].hand_raised = false;
                     students[cid].online = false;
-                    addLog(`学生离线: ${data.name} (${cid})`);
+                    addLog(`学生离线: ${data.name} (${data.student_id})`);
                 }
                 updateList();
             });
