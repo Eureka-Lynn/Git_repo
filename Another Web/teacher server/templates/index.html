@@ -54,11 +54,13 @@
             const logList = document.getElementById('log-list');
             const btnCancelAll = document.getElementById('btn-cancel-all');
 
+            // 全部放下按钮
             btnCancelAll.onclick = async () => {
                 const resp = await fetch('/cancel_all', { method: 'POST' });
                 if (resp.ok) addLog('🧑‍🏫 教师发起：统一放下所有学生');
             };
 
+            // 更新学生列表显示
             function updateList() {
                 studentList.innerHTML = '';
                 Object.values(students).forEach(stu => {
@@ -66,27 +68,27 @@
                     li.className = stu.hand_raised ? 'raised' : '';
                     if (stu.online === false) li.classList.add('offline');
 
-                    // 名称与 id
+                    // 左侧：姓名 + client_id + 状态
                     const left = document.createElement('div');
-                    left.textContent = `${stu.name} (${stu.student_id}) ${stu.online ? '' : '(离线)'}`;
+                    left.textContent = `${stu.name} (${stu.client_id}) ${stu.online ? '' : '(离线)'}`;
                     li.appendChild(left);
 
-                    // 右侧：按钮或状态
+                    // 右侧：按钮或离线提示
                     const right = document.createElement('div');
                     if (stu.hand_raised && stu.online) {
                         const btn = document.createElement('button');
                         btn.textContent = '放下';
                         btn.onclick = async () => {
-                            const resp = await fetch(`/cancel_hand_raise/${stu.student_id}`, {method:'POST'});
+                            const resp = await fetch(`/cancel_hand_raise/${stu.client_id}`, {method:'POST'});
                             if (resp.ok) {
-                                stu.hand_raised = false;
-                                updateList();
-                                addLog(`🧑‍🏫 点击放下 ${stu.name} (${stu.student_id})`);
+                                addLog(`🧑‍🏫 点击放下 ${stu.name} (${stu.client_id})`);
                             }
                         };
                         right.appendChild(btn);
+                    } else if (stu.hand_raised && !stu.online) {
+                        right.textContent = '举手(离线)';
                     } else {
-                        right.textContent = stu.hand_raised ? '举手(离线)' : '';
+                        right.textContent = '';
                     }
                     li.appendChild(right);
 
@@ -94,6 +96,7 @@
                 });
             }
 
+            // 添加日志
             function addLog(msg) {
                 const li = document.createElement('li');
                 const time = new Date().toLocaleTimeString();
@@ -107,37 +110,37 @@
                 li.scrollIntoView({behavior:'smooth', block:'end'});
             }
 
+            // 从后端获取当前学生列表
             async function fetchStudents() {
                 const res = await fetch('/students');
                 const data = await res.json();
-                data.forEach(s => { students[s.student_id] = s; });
+                data.forEach(s => { students[s.client_id] = s; });
                 updateList();
             }
             await fetchStudents();
 
+            // SocketIO 接收 MQTT 消息
             const socket = io();
             socket.on('mqtt_message', msg => {
                 const topic = msg.topic;
                 const data = msg.data;
-                const sid = data.student_id;
+                const cid = data.client_id;
 
-                if (!students[sid]) students[sid] = data;
+                if (!students[cid]) students[cid] = data;
 
                 if (topic === 'join') {
-                    students[sid] = data;
-                    students[sid].hand_raised = false;
-                    students[sid].online = true;
-                    addLog(`学生上线: ${data.name} (${sid})`);
+                    students[cid] = data;
+                    students[cid].hand_raised = false;
+                    students[cid].online = true;
+                    addLog(`学生上线: ${data.name} (${cid})`);
                 } else if (topic === 'hand_raise') {
-                    students[sid].hand_raised = data.hand_raised;
-                    students[sid].online = data.get && data.online !== undefined ? data.online : (students[sid].online !== false);
-                    addLog(`学生状态更新: ${data.name} (${sid}) -> ${data.hand_raised ? '举手' : '放下'}`);
-                } else if (topic === 'lwt' || topic === 'lwt' ) {
-                    students[sid].hand_raised = false;
-                    students[sid].online = false;
-                    addLog(`学生离线: ${data.name} (${sid})`);
-                } else if (topic === '???') {
-                    // 预留
+                    students[cid].hand_raised = data.hand_raised;
+                    students[cid].online = data.online !== undefined ? data.online : true;
+                    addLog(`学生状态更新: ${data.name} (${cid}) -> ${data.hand_raised ? '举手' : '放下'}`);
+                } else if (topic === 'lwt') {
+                    students[cid].hand_raised = false;
+                    students[cid].online = false;
+                    addLog(`学生离线: ${data.name} (${cid})`);
                 }
                 updateList();
             });
