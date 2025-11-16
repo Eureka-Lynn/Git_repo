@@ -1,150 +1,301 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8" />
-    <title>教师端实时监控</title>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-    <style>
-        body {
-            margin: 0;
-            font-family: "Microsoft YaHei", sans-serif;
-            display: flex;
-            height: 100vh;
-            background: #fafafa;
-        }
-        #left-panel { flex: 1; padding: 20px; overflow-y: auto; }
-        h1 { color: #333; }
-        ul { list-style: none; padding: 0; margin: 0; }
-        li {
-            background: #fff; border: 1px solid #ddd; padding: 10px 15px;
-            margin-bottom: 8px; border-radius: 8px; display:flex;
-            justify-content: space-between; align-items:center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-        .raised { background: #ffeaea; border-color: #ffb3b3; }
-        .offline { opacity: 0.5; }
-        button { background:#007bff; border:none; color:#fff; padding:6px 12px; border-radius:5px; cursor:pointer; }
-        button:hover { background: #0056b3; }
+<meta charset="UTF-8" />
+<title>机房学生管理系统</title>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+    body {
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: #f0f2f5;
+}
 
-        #debug-log { width:350px; height:100vh; background:#1e1e1e; color:#fff; font-family:monospace; overflow-y:auto; padding:10px; box-sizing:border-box; box-shadow:-2px 0 5px rgba(0,0,0,0.2); }
-        #debug-log h3 { margin-top:0; border-bottom:1px solid #444; padding-bottom:5px; }
-        #log-list { margin:0; padding-left:0; list-style:none; }
-        #log-list li { margin-bottom:4px; font-size:13px; }
-        #top-controls { margin-bottom: 12px; }
-    </style>
+/* 左侧控制栏 */
+#sidebar {
+  width: 260px;
+  background: #ffffff;
+  border-right: 1px solid #ddd;
+  padding: 20px;
+  overflow-y: auto;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+}
+
+#sidebar h3 {
+  margin-top: 0;
+  color: #333;
+  font-size: 18px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+#sidebar button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #4a90e2, #357ab7);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+#sidebar button:hover {
+  filter: brightness(1.07);
+}
+
+/* 主内容区 */
+#main {
+  flex: 1;
+  padding: 20px 40px;
+  overflow: auto;
+}
+
+#main h2 {
+  font-weight: 500;
+  color: #333;
+  margin-top: 0;
+}
+
+/* 六列布局 */
+#seatGrid {
+  display: flex;
+  justify-content: center;
+  gap: 70px;
+  padding-top: 20px;
+}
+
+/* 单列 */
+.column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 两侧 */
+.side-group {
+  display: flex;
+  gap: 30px;
+}
+
+/* 四个座位垂直排列 */
+.side-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 单个座位（卡片风格） */
+.seat {
+  width: 120px;
+  height: 65px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 13px;
+  text-align: center;
+  position: relative;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.seat.online {
+  background: #e7ffe7;
+  border-color: #84d984;
+}
+
+.seat.hand {
+  background: #e7f1ff;
+  border-color: #7db8ff;
+  box-shadow: 0 0 10px rgba(100,150,255,0.8);
+}
+
+.cancel-btn {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  font-size: 10px;
+  padding: 2px 5px;
+  background: #ff6b6b;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.cancel-btn:hover {
+  filter: brightness(1.1);
+}
+
+/* Debug Panel */
+#debugPanel {
+  width: 300px;
+  background: rgba(0,0,0,0.85);
+  color: #0f0;
+  padding: 12px;
+  border-left: 2px solid #444;
+  font-size: 12px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  backdrop-filter: blur(4px);
+}
+
+</style>
 </head>
 <body>
-    <div id="left-panel">
-        <h1>学生列表</h1>
-        <div id="top-controls">
-            <button id="btn-cancel-all">统一放下所有学生</button>
-        </div>
-        <ul id="student-list"></ul>
-    </div>
 
-    <div id="debug-log">
-        <h3>Debug Log</h3>
-        <ul id="log-list"></ul>
-    </div>
+<!-- 左侧控制栏 -->
+<div id="sidebar">
+  <h3>控制</h3>
+  <button id="cancelAllBtn">全部放下举手</button>
+</div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const students = {};
-            const studentList = document.getElementById('student-list');
-            const logList = document.getElementById('log-list');
-            const btnCancelAll = document.getElementById('btn-cancel-all');
+<!-- 中间主内容区域 -->
+<div id="main">
+  <h2>机房座位图</h2>
+  <div id="seatGrid"></div>
+</div>
 
-            btnCancelAll.onclick = async () => {
-                const resp = await fetch('/cancel_all', { method: 'POST' });
-                if (resp.ok) addLog('🧑‍🏫 教师发起：统一放下所有学生');
-            };
+<!-- 右侧 Debug Log 面板 -->
+<div id="debugPanel"></div>
 
-            function updateList() {
-                studentList.innerHTML = '';
-                Object.values(students).forEach(stu => {
-                    const li = document.createElement('li');
-                    li.className = stu.hand_raised ? 'raised' : '';
-                    if (stu.online === false) li.classList.add('offline');
+<script>
+/* 最终确认的座位布局（六列，从左到右） */
+const seatLayout = [
+  { right: ["STU-045","STU-046","STU-047","STU-048"], left: ["STU-041","STU-042","STU-043","STU-044"] },
+  { right: ["STU-037","STU-038","STU-039","STU-040"], left: ["STU-033","STU-034","STU-035","STU-036"] },
+  { right: ["STU-029","STU-030","STU-031","STU-032"], left: ["STU-025","STU-026","STU-027","STU-028"] },
+  { right: ["STU-021","STU-022","STU-023","STU-024"], left: ["STU-017","STU-018","STU-019","STU-020"] },
+  { right: ["STU-013","STU-014","STU-015","STU-016"], left: ["STU-009","STU-010","STU-011","STU-012"] },
+  { right: ["STU-005","STU-006","STU-007","STU-008"], left: ["STU-001","STU-002","STU-003","STU-004"] }
+];
 
-                    // 显示姓名和学号
-                    const left = document.createElement('div');
-                    left.textContent = `${stu.name} (${stu.student_id}) ${stu.online ? '' : '(离线)'}`;
-                    li.appendChild(left);
+let students = {};  // { client_id: {...} }
+const debugPanel = document.getElementById('debugPanel');
 
-                    const right = document.createElement('div');
+/* 追加 Debug Log */
+function log(msg) {
+  debugPanel.textContent += msg + "\n";
+  debugPanel.scrollTop = debugPanel.scrollHeight;
+}
 
-                    // 只有在线且举手的学生显示“放下”按钮
-                    if (stu.hand_raised && stu.online) {
-                        const btn = document.createElement('button');
-                        btn.textContent = '放下';
-                        btn.onclick = async () => {
-                            const resp = await fetch(`/cancel_hand_raise/${stu.client_id}`, {method:'POST'});
-                            if (resp.ok) {
-                                stu.hand_raised = false;
-                                updateList();
-                                addLog(`🧑‍🏫 点击放下 ${stu.name} (${stu.student_id})`);
-                            }
-                        };
-                        right.appendChild(btn);
-                    } else if (stu.hand_raised && !stu.online) {
-                        right.textContent = '举手(离线)';
-                    } else {
-                        right.textContent = '';
-                    }
+/* 渲染整个六列布局 */
+function renderGrid() {
+  const grid = document.getElementById("seatGrid");
+  grid.innerHTML = "";
 
-                    li.appendChild(right);
-                    studentList.appendChild(li);
-                });
-            }
+  seatLayout.forEach(col => {
+    const colDiv = document.createElement("div");
+    colDiv.className = "column";
 
-            function addLog(msg) {
-                const li = document.createElement('li');
-                const time = new Date().toLocaleTimeString();
-                li.textContent = `[${time}] ${msg}`;
-                if (msg.includes("上线")) li.style.color = "lime";
-                else if (msg.includes("状态更新")) li.style.color = "orange";
-                else if (msg.includes("教师")) li.style.color = "cyan";
-                else li.style.color = "#fff";
-                logList.appendChild(li);
-                while (logList.children.length > 200) logList.removeChild(logList.firstChild);
-                li.scrollIntoView({behavior:'smooth', block:'end'});
-            }
+    const sideGroup = document.createElement("div");
+    sideGroup.className = "side-group";
 
-            async function fetchStudents() {
-                const res = await fetch('/students');
-                const data = await res.json();
-                data.forEach(s => { students[s.client_id] = s; });
-                updateList();
-            }
-            await fetchStudents();
+    // 右侧（靠教师）
+    const rightColumn = document.createElement("div");
+    rightColumn.className = "side-column";
+    col.right.forEach(cid => rightColumn.appendChild(createSeat(cid)));
 
-            const socket = io();
-            socket.on('mqtt_message', msg => {
-                const topic = msg.topic;
-                const data = msg.data;
-                const cid = data.client_id;
+    // 左侧
+    const leftColumn = document.createElement("div");
+    leftColumn.className = "side-column";
+    col.left.forEach(cid => leftColumn.appendChild(createSeat(cid)));
 
-                if (!students[cid]) students[cid] = data;
+    sideGroup.appendChild(rightColumn);
+    sideGroup.appendChild(leftColumn);
+    colDiv.appendChild(sideGroup);
 
-                if (topic === 'join') {
-                    students[cid] = data;
-                    students[cid].hand_raised = false;
-                    students[cid].online = true;
-                    addLog(`学生上线: ${data.name} (${data.student_id})`);
-                } else if (topic === 'hand_raise') {
-                    students[cid].hand_raised = data.hand_raised;
-                    students[cid].online = data.online !== undefined ? data.online : (students[cid].online !== false);
-                    addLog(`学生状态更新: ${data.name} (${data.student_id}) -> ${data.hand_raised ? '举手' : '放下'}`);
-                } else if (topic === 'lwt') {
-                    students[cid].hand_raised = false;
-                    students[cid].online = false;
-                    addLog(`学生离线: ${data.name} (${data.student_id})`);
-                }
-                updateList();
-            });
+    grid.appendChild(colDiv);
+  });
+}
 
-            socket.on('debug_message', data => addLog(data.message));
-        });
-    </script>
+/* 创建座位元素 DOM */
+function createSeat(cid) {
+  const seat = document.createElement("div");
+  seat.className = "seat";
+  seat.id = "seat-" + cid;
+
+  updateSeatContent(seat, students[cid], cid);
+
+  return seat;
+}
+
+/* 更新单个座位显示 */
+function updateSeatContent(seat, info, cid) {
+  seat.className = "seat";
+
+  if (info) {
+    if (info.online) seat.classList.add("online");
+    if (info.hand_raised) seat.classList.add("hand");
+  }
+
+  seat.innerHTML = info
+    ? `${info.name}<br>${info.student_id}`
+    : cid;
+
+  const btn = document.createElement("button");
+  btn.className = "cancel-btn";
+  btn.textContent = "放下";
+  btn.onclick = () => cancelSingle(cid);
+  seat.appendChild(btn);
+}
+
+/* 后端返回更新某个学生后刷新 */
+function updateSeat(cid) {
+  const seat = document.getElementById("seat-" + cid);
+  if (!seat) return;
+  updateSeatContent(seat, students[cid], cid);
+}
+
+/* 单个放下举手 */
+function cancelSingle(cid) {
+  fetch(`/cancel_hand_raise/${cid}`, { method: "POST" })
+    .then(() => log(`取消单个举手: ${cid}`));
+}
+
+/* 全部放下 */
+document.getElementById("cancelAllBtn").onclick = () => {
+  fetch("/cancel_all", { method: "POST" }).then(() => log("取消全部举手"));
+};
+
+/* Socket.IO 接收学生状态变动 */
+const socket = io();
+socket.on("mqtt_message", msg => {
+  log("收到: " + JSON.stringify(msg));
+  const data = msg.data;
+  students[data.client_id] = data;
+  updateSeat(data.client_id);
+});
+
+/* ------------------------------ */
+/*  ⭐ 重要：页面加载时同步后端状态  */
+/* ------------------------------ */
+async function loadInitialStudents() {
+  try {
+    const res = await fetch("/students");
+    const list = await res.json();
+    list.forEach(s => {
+      students[s.client_id] = s;
+      updateSeat(s.client_id);
+    });
+    log("初始化同步完成，共载入 " + list.length + " 个学生");
+  } catch (e) {
+    log("初始化学生失败: " + e);
+  }
+}
+
+/* 初始渲染 + 从后端同步状态 */
+renderGrid();
+loadInitialStudents();
+
+</script>
 </body>
 </html>
