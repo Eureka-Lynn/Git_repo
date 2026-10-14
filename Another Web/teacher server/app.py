@@ -1,4 +1,4 @@
-# $env:GEVENT_SUPPORT="True"
+#每次都要设置一下PATH: $env:GEVENT_SUPPORT="True"
 from gevent import monkey
 monkey.patch_all()
 
@@ -14,7 +14,7 @@ MQTT_BROKER = '192.168.3.111'
 MQTT_PORT = 1883
 MQTT_TOPIC = 'classroom'
 
-students = {}      # { client_id: {name, student_id, hand_raised, online} }
+students = {}
 mqtt_client = mqtt.Client()
 
 def debug_log(msg):
@@ -37,20 +37,19 @@ def on_message(client, userdata, msg):
     cid = data.get("client_id", "")
 
 
-    # 教师/系统统一取消举手
+    #统一取消举手
     if msg_type == "cancel_all":
         print('recived cancel_all')
-    # 将所有学生 hand_raised 设为 False（保持 online 不变）
         for s in students.values():
             s["hand_raised"] = False
         debug_log("收到 cancel_all: 教师端请求所有学生放下手")
         print(students.items())
-        # 逐个发送 hand_raise 事件更新前端显示
+        # 逐个发送hand_raise事件到前端显示
         for sid_key, sdata in students.items():
             socketio.emit('mqtt_message', {'topic': 'hand_raise', 'data': sdata})
         return
 
-    # 学生上线
+    #学生上线
     if msg_type == "join":
         print('recieved join')
         students[cid] = {
@@ -65,7 +64,7 @@ def on_message(client, userdata, msg):
         return
 
 
-    # 学生举手/放下
+    #学生举手/放下
     if msg_type == "hand_raise":
         print('recieved hand_raise')
         if cid not in students:
@@ -83,7 +82,7 @@ def on_message(client, userdata, msg):
 
 
 
-    # 学生异常掉线（LWT）
+    #掉线LWT处理
     if msg_type in ("lwt"):
         if cid not in students:
             students[cid] = {
@@ -96,7 +95,7 @@ def on_message(client, userdata, msg):
         socketio.emit('mqtt_message', {'topic': 'lwt', 'data': students[cid]})
         debug_log(f"学生掉线: {students[cid]}")
 
-# Flask 路由
+#Flask路由
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -105,7 +104,7 @@ def index():
 def get_students():
     return jsonify(list(students.values()))
 
-# 单个学生放下手（基于 client_id）
+#控制单个学生放下手
 @app.route('/cancel_hand_raise/<client_id>', methods=['POST'])
 def cancel_hand_raise(client_id):
     cid = str(client_id)
@@ -122,7 +121,7 @@ def cancel_hand_raise(client_id):
         return jsonify({'status': 'ok'})
     return jsonify({'status': 'student_not_found'}), 404
 
-# 教师端一键取消所有学生举手
+#一键取消所有举手
 @app.route('/cancel_all', methods=['POST'])
 def cancel_all():
     payload = json.dumps({"type": "cancel_all",})
@@ -130,7 +129,7 @@ def cancel_all():
     debug_log("教师发起 cancel_all -> classroom (qos=2)")
     return jsonify({'status': 'ok'})
 
-# MQTT 循环
+# MQTT循环
 def mqtt_loop():
     mqtt_client.on_connect = on_connect
     mqtt_client.on_message = on_message

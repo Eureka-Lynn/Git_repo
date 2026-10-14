@@ -1,4 +1,3 @@
-# main.py（Pico, MicroPython）
 import machine
 import time
 import sys
@@ -12,7 +11,7 @@ led = machine.Pin(LED_PIN, machine.Pin.OUT)
 
 last = button.value()
 
-# 使用 select 避免阻塞
+#使用select避免阻塞
 poll = select.poll()
 poll.register(sys.stdin, select.POLLIN)
 
@@ -22,11 +21,10 @@ def read_serial_nonblocking():
         try:
             line = sys.stdin.readline()
             if line:
-                # line 已经是 str（MicroPython 在很多固件上返回 str）
                 s = line.strip()
                 return s
         except Exception as e:
-            # 容忍任何串口读取错误
+            #上报串口读取错误
             try:
                 print("SERIAL_READ_ERR", e)
             except:
@@ -39,7 +37,6 @@ while True:
     cmd = read_serial_nonblocking()
     if cmd:
         print('receive:',cmd)
-        # 兼容 bytes/str
         try:
             if isinstance(cmd, bytes):
                 print('cmd为bytes')
@@ -56,14 +53,14 @@ while True:
             led.value(0)
         elif text == "ALL_OFF":
             led.value(0)
-        # 返回 ACK 以便 PC 确认
+        #串口回传
         print("[ACK]", text)
 
-    # 按键下降沿检测：1 -> 0
+    #按键下降沿检测
     cur = button.value()
     if last == 1 and cur == 0:
         print("BTN")
-        # 消抖
+        #消抖
         time.sleep(0.18)
     last = cur
 

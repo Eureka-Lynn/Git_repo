@@ -8,7 +8,7 @@ from flask import Flask, render_template, request
 import serial
 import paho.mqtt.client as mqtt
 
-# 配置
+#基础配置
 SERIAL_PORT = 'COM3'
 SERIAL_BAUD = 115200
 MQTT_BROKER = '192.168.3.111'
@@ -32,7 +32,7 @@ ser_lock = threading.Lock()
 mqtt_client = None
 serial_event_q = Queue()
 
-# 串口
+#设置PICO串口
 def open_serial():
     global ser
     try:
@@ -72,7 +72,7 @@ def serial_send_cmd(cmd_text):
             except:
                 pass
 
-# MQTT
+#MQTT初步设置
 def mqtt_on_connect(client, userdata, flags, rc):
     client.subscribe(MQTT_TOPIC, qos=2)
 
@@ -85,7 +85,7 @@ def mqtt_on_message(client, userdata, msg):
     typ = data.get("type")
     msg_client_id = data.get("client_id", "")
 
-    # 只处理针对自己或广播
+    #只处理针对自己的信息
     if msg_client_id and msg_client_id != student_info["client_id"]:
         return
 
@@ -100,12 +100,12 @@ def mqtt_on_message(client, userdata, msg):
         student_info["hand_raised"] = False
         serial_send_cmd("LED_OFF")
 
-# 串口事件处理
+#串口事件处理
 def serial_event_processor():
     global mqtt_client
     while True:
-        ev = serial_event_q.get()
-        if ev == "BTN" and student_info["logged_in"]:
+        event = serial_event_q.get()
+        if event == "BTN" and student_info["logged_in"]:
             student_info["hand_raised"] = not student_info["hand_raised"]
             payload = {
                 "type": "hand_raise",
@@ -121,7 +121,7 @@ def serial_event_processor():
             else:
                 serial_send_cmd("LED_OFF")
 
-# Flask 登录
+#通过Flask简单登录
 @app.route('/', methods=['GET','POST'])
 def login():
     global mqtt_client
@@ -135,7 +135,7 @@ def login():
         student_info["student_id"] = sid
         student_info["logged_in"] = True
 
-        # MQTT 初始化
+        #MQTT初始化
         client_id = student_info["client_id"]
         mqtt_client = mqtt.Client(client_id=client_id)
         lwt_msg = {
@@ -157,7 +157,7 @@ def login():
         t2 = threading.Thread(target=serial_event_processor, daemon=True)
         t2.start()
 
-        # 发布 join 消息
+        #上线发布join消息
         join_payload = {
             "type": "join",
             "client_id": client_id,

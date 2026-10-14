@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>内鬼选择器</title>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+  <h1>内鬼选择器</h1>
+
+  <div id="login">
+    <input id="name" placeholder="输入你的名字">
+    <button onclick="join()">加入游戏</button>
+  </div>
+
+  <div id="game" style="display:none;">
+    <h3>已加入玩家：</h3>
+    <ul id="playerList"></ul>
+    <p id="role"></p>
+    <button onclick="resetRoom()">重置房间</button>
+  </div>
+
+  <script>
+    const socket = io();
+
+    function join() {
+      const name = document.getElementById("name").value;
+      if (!name) return alert("请输入名字！");
+      socket.emit("join", {name: name});
+      document.getElementById("login").style.display = "none";
+      document.getElementById("game").style.display = "block";
+    }
+
+    function resetRoom() {
+      socket.emit("reset_room");
+      document.getElementById("role").innerText = "";
+    }
+
+    socket.on("player_list", (data) => {
+      const ul = document.getElementById("playerList");
+      ul.innerHTML = "";
+      data.players.forEach(p => {
+        const li = document.createElement("li");
+        li.innerText = p;
+        ul.appendChild(li);
+      });
+    });
+
+    socket.on("your_role", (data) => {
+      document.getElementById("role").innerText = "你的身份是：" + data.role;
+    });
+  </script>
+</body>
+</html>
